@@ -279,34 +279,51 @@ class MDCode:
             code = m[0]  # isolate the block of code
             string = string.replace(code, "@@MINTEDTOKEN@@")  # to reinject code to string later
 
-            # extract the code language; try...except to avoid errors if no language is matched
-            try:
-                lang = re.search(r"```([^\n]*)$", code, flags=re.M)[0].replace("```", "").strip()  # ugly but works
-            except TypeError:
-                lang = None
+            # extract info string possibly containing language and title/caption
+            info_string = re.search(r"```([^\n]*)$", code, flags=re.M)[0].replace("```", "").strip()  # ugly but works
+            metadata = {}
+            # assume language is the first word in the info string
+            # cf. https://spec.commonmark.org/0.31.2/#fenced-code-blocks
+            lang = re.search(r'^([0-9A-Za-z_-]+) *', info_string)
+            metadata['lang'] = lang[1] if lang else None 
+            
+            # titles specified like title="A nice code block" in the info string
+            # will be converted to captions
+            title = re.search(r'title="([^"]+)"', info_string)
+            metadata['title'] = title[1] if title else None
 
             # if the used language is supported by minted, create a minted inside
             # a listing environment to hold the code
-            if lang in languages:
+            if metadata['lang'] in languages:
                 env = r"""
 \begin{listing}[h!]
     \begin{minted}{@@LANGTOKEN@@}
 @@CODETOKEN@@
     \end{minted}
+    @@CAPTIONTOKEN@@
 \end{listing}"""  # env to add the code to; ugly indentation to avoid messing up the .tex file
                 code = re.sub(r"```.*?\n((.|\n)+?)```", r"\1", code, flags=re.M)  # extract code body
-                code = env.replace("@@LANGTOKEN@@", lang).replace("@@CODETOKEN@@", code)  # add code to the latex env
+                code = env.replace("@@LANGTOKEN@@", metadata['lang']).replace("@@CODETOKEN@@", code)  # add code to the latex env
+                
+                if metadata['title']: # add a caption if a codeblock title was found
+                    code = code.replace("@@CAPTIONTOKEN@@", r'\caption{' + metadata['title'] + r'}')
+                else:  # remove captiontoken line
+                    code = code.replace("    @@CAPTIONTOKEN@@\n","")
 
             # if the langage is not supported (or if the characters after the opening ```
             # aren't a language), only create a lstlisting environment and reinject the code
             # in it
             else:
                 env = r"""
-\begin{lstlisting}
+\begin{lstlisting}@@CAPTIONTOKEN@@
 @@CODETOKEN@@
 \end{lstlisting}
                 """  # env to add the code to
-                code = env.replace("@@CODETOKEN@@", re.sub(r"```", "", code, flags=re.M))  # reinject code block to env
+                code = env.replace("@@CODETOKEN@@", re.sub(r"```.*\n", "", code, flags=re.M))  # reinject code block to env
+                if metadata['title']:
+                    code = code.replace("@@CAPTIONTOKEN@@", f"[caption={metadata['title']}]")
+                else:
+                    code = code.replace("@@CAPTIONTOKEN@@", "")
 
             string = string.replace("@@MINTEDTOKEN@@", code)  # reinject latex code to string
 
