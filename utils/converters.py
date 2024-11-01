@@ -460,12 +460,12 @@ class MDCleaner:
             string = string.replace(k, v)
 
         # clean spaces
-        string = re.sub(r"((?<!^ ) )+", " ", string, flags=re.M)
-        string = re.sub(r"{\s+", r"{", string, flags=re.M)
-        string = re.sub(r"\s+}", r"}", string, flags=re.M)
-        string = re.sub(r"\n{2,}", r"\n\n", string, flags=re.M)
-        string = re.sub(r"(\\begin\{.*?)\n{2,}", r"\1\n", string, flags=re.M)
-        string = re.sub(r"\n{2,}(\\end\{)", r"\n\1", string, flags=re.M)
+        # string = re.sub(r"((?<!^ ) )+", " ", string, flags=re.M)  # replace multiple spaces with a single space, but not if they are at the beginning of a line
+        # string = re.sub(r"{\s+", r"{", string, flags=re.M)  # remove whitespace after opening curly brace
+        # string = re.sub(r"\s+}", r"}", string, flags=re.M)  # remove whitespace before closing curly brace
+        string = re.sub(r"\n{2,}", r"\n\n", string, flags=re.M)  # reduce 2+ consecutive newlines to 2
+        string = re.sub(r"(\\begin\{.*?)\n{2,}", r"\1\n", string, flags=re.M)  # replace multiple consecutive newlines after \begin with just one
+        string = re.sub(r"\n{2,}(\\end\{)", r"\n\1", string, flags=re.M) # replace multiple consecutive newlines after \end with just one
 
         string = string.replace("USERRESERVEDTOKEN", "@@")
 
