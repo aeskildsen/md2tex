@@ -470,3 +470,22 @@ class MDCleaner:
         string = string.replace("USERRESERVEDTOKEN", "@@")
 
         return string
+
+
+class MDFrontmatter:
+    """
+    remove Markdown file frontmatter written in YAML format
+    """
+    
+    @staticmethod
+    def convert(string: str):
+        """
+        perform the conversion: delete markdown frontmatter
+        :param string: the string rpr of the markdown file to convert
+        :return: string with the conversion performed
+        """
+        
+        flags = re.MULTILINE | re.DOTALL
+        string = re.sub(r"^---.*---", "", string, flags=flags)
+
+        return string

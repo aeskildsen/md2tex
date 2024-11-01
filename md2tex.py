@@ -3,7 +3,7 @@ import click
 import re
 import os
 
-from utils.converters import MDSimple, MDQuote, MDList, MDCode, MDCleaner, MDReference, MDHeader
+from utils.converters import MDSimple, MDQuote, MDList, MDCode, MDCleaner, MDReference, MDHeader, MDFrontmatter
 from utils.errors_warnings import InputException, Warnings
 
 
@@ -98,6 +98,7 @@ def md2tex(
     #                                 this function comes first so that they won't be changed
     #                                 by `prepare_markdown()`
     data, codedict = MDCleaner.prepare_markdown(data)  # escape special chars + remove code envs from the pipeline
+    data = MDFrontmatter.convert(data)
     data = MDQuote.inline_quote(data, french_quote)
     data = MDQuote.block_quote(data)
     data = MDList.unordered_l(data)
