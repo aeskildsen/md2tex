@@ -62,30 +62,30 @@ class MDHeader:
     article_numbered: a dict to convert markdown headers to latex `book` document class numbered sections
     """
     book_numbered = {
-        r"^\s*(\\#){1}(?!\\#?)(.*?)$": r"\\chapter{\2}\n",  # 1st level title
-        r"^\s*(\\#){2}(?!\\#?)(.*?)$": r"\\section{\2}\n",  # 2nd level title
-        r"^\s*(\\#){3}(?!\\#?)(.*?)$": r"\\subsection{\2}\n",  # 3rd level title
-        r"^\s*(\\#){4}(?!\\#?)(.*?)$": r"\\subsubsection{\2}\n",  # 4th level title
-        r"^\s*(\\#){5,}(?!\\#?)(.*?)$": r"\n\n\\textbf{\2}\n\n",  # 5th+ level title
+        r"^\s*(\\#){1}(?!\\#?) *(.*?)$": r"\\chapter{\2}\n",  # 1st level title
+        r"^\s*(\\#){2}(?!\\#?) *(.*?)$": r"\\section{\2}\n",  # 2nd level title
+        r"^\s*(\\#){3}(?!\\#?) *(.*?)$": r"\\subsection{\2}\n",  # 3rd level title
+        r"^\s*(\\#){4}(?!\\#?) *(.*?)$": r"\\subsubsection{\2}\n",  # 4th level title
+        r"^\s*(\\#){5,}(?!\\#?) *(.*?)$": r"\n\n\\textbf{\2}\n\n",  # 5th+ level title
     }
     book_unnumbered = {
-        r"^\s*(\\#){1}(?!\\#?)(.*?)$": r"\\chapter*{\2}\n\\addcontentsline{toc}{chapter}{\2}\n",
-        r"^\s*(\\#){2}(?!\\#?)(.*?)$": r"\\section*{\2}\n\\addcontentsline{toc}{section}{\2}\n",
-        r"^\s*(\\#){3}(?!\\#?)(.*?)$": r"\\subsection*{\2}\n\\addcontentsline{toc}{subsection}{\2}\n",
-        r"^\s*(\\#){4}(?!\\#?)(.*?)$": r"\\subsubsection*{\2}\n\\addcontentsline{toc}{subsubsection}{\2}\n",
-        r"^\s*(\\#){5,}(?!\\#?)(.*?)$": r"\n\n\\noindent{}\\textbf{\2}\n\n",
+        r"^\s*(\\#){1}(?!\\#?) *(.*?)$": r"\\chapter*{\2}\n\\addcontentsline{toc}{chapter}{\2}\n",
+        r"^\s*(\\#){2}(?!\\#?) *(.*?)$": r"\\section*{\2}\n\\addcontentsline{toc}{section}{\2}\n",
+        r"^\s*(\\#){3}(?!\\#?) *(.*?)$": r"\\subsection*{\2}\n\\addcontentsline{toc}{subsection}{\2}\n",
+        r"^\s*(\\#){4}(?!\\#?) *(.*?)$": r"\\subsubsection*{\2}\n\\addcontentsline{toc}{subsubsection}{\2}\n",
+        r"^\s*(\\#){5,}(?!\\#?) *(.*?)$": r"\n\n\\noindent{}\\textbf{\2}\n\n",
     }
     article_numbered = {
-        r"^\s*(\\#){1}(?!\\#?)(.*?)$": r"\\section{\2}\n",  # 1st level title
-        r"^\s*(\\#){2}(?!\\#?)(.*?)$": r"\\subsection{\2}\n",  # 2nd level title
-        r"^\s*(\\#){3}(?!\\#?)(.*?)$": r"\\subsubsection{\2}\n",  # 3rd level title
-        r"^\s*(\\#){4,}(?!\\#?)(.*?)$": r"\n\n\\noindent{}\\textbf{\2}\n\n",  # 4th level title
+        r"^\s*(\\#){1}(?!\\#?) *(.*?)$": r"\\section{\2}\n",  # 1st level title
+        r"^\s*(\\#){2}(?!\\#?) *(.*?)$": r"\\subsection{\2}\n",  # 2nd level title
+        r"^\s*(\\#){3}(?!\\#?) *(.*?)$": r"\\subsubsection{\2}\n",  # 3rd level title
+        r"^\s*(\\#){4,}(?!\\#?) *(.*?)$": r"\n\n\\noindent{}\\textbf{\2}\n\n",  # 4th level title
     }
     article_unnumbered = {
-        r"^\s*(\\#){1}(?!\\#?)(.*?)$": r"\\section*{\2}\n\\addcontentsline{toc}{section}{\2}\n",
-        r"^\s*(\\#){2}(?!\\#?)(.*?)$": r"\\section*{\2}\n\\addcontentsline{toc}{subsection}{\2}\n",
-        r"^\s*(\\#){3}(?!\\#?)(.*?)$": r"\\subsection*{\2}\n\\addcontentsline{toc}{subsubsection}{\2}\n",
-        r"^\s*(\\#){4,}(?!\\#?)(.*?)$": r"\n\n\\noindent{}\\textbf{\2}\n\n",
+        r"^\s*(\\#){1}(?!\\#?) *(.*?)$": r"\\section*{\2}\n\\addcontentsline{toc}{section}{\2}\n",
+        r"^\s*(\\#){2}(?!\\#?) *(.*?)$": r"\\section*{\2}\n\\addcontentsline{toc}{subsection}{\2}\n",
+        r"^\s*(\\#){3}(?!\\#?) *(.*?)$": r"\\subsection*{\2}\n\\addcontentsline{toc}{subsubsection}{\2}\n",
+        r"^\s*(\\#){4,}(?!\\#?) *(.*?)$": r"\n\n\\noindent{}\\textbf{\2}\n\n",
     }
 
     @staticmethod
@@ -465,7 +465,7 @@ class MDCleaner:
         # string = re.sub(r"\s+}", r"}", string, flags=re.M)  # remove whitespace before closing curly brace
         string = re.sub(r"\n{2,}", r"\n\n", string, flags=re.M)  # reduce 2+ consecutive newlines to 2
         string = re.sub(r"(\\begin\{.*?)\n{2,}", r"\1\n", string, flags=re.M)  # replace multiple consecutive newlines after \begin with just one
-        string = re.sub(r"\n{2,}(\\end\{)", r"\n\1", string, flags=re.M) # replace multiple consecutive newlines after \end with just one
+        string = re.sub(r"\n{2,}( *\\end\{)", r"\n\1", string, flags=re.M) # replace multiple consecutive newlines before \end with just one
 
         string = string.replace("USERRESERVEDTOKEN", "@@")
 
