@@ -5,6 +5,7 @@ img/lsp*
 output/*
 input/*
 .idea
+*.egg-info/
 
 ## aux TeX files
 _minted-*
