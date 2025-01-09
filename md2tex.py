@@ -32,6 +32,9 @@ from utils.errors_warnings import InputException, Warnings
 @click.option("-d", "--document-class", "document_class", default="article",
               help="optional. sets the class of the TeX document. possible values "
                    + "are: `book`|`article`. defaults to `article`")
+@click.option("-s", "--stdout", "write_stdout", is_flag=True, default=False,
+              help="optional. if provided, output wil be written to stdout instead of the output path.")
+
 def md2tex(
         inpath: str,
         outpath=None,
@@ -39,7 +42,8 @@ def md2tex(
         template="utils/template.tex",
         french_quote=False,
         unnumbered=False,
-        document_class="article"
+        document_class="article",
+        write_stdout=False
 ):
     """
     convert a Markdown file to a TeX file.
@@ -111,23 +115,29 @@ def md2tex(
     data = MDSimple.convert(data)
     data = MDCleaner.clean_tex(data, codedict)  # clean the tex file + reinject the escaped code blocks
 
-    # ==================== BUILD + WRITE OUTPUT TO FILE ==================== #
-    if tex is True:  # create full tex file.
-        try:
-            with open(template, mode="r") as fh:
-                tex_template = fh.read()
-                if "@@BODYTOKEN@@" not in tex_template:
-                    raise InputException("template_no_token", template)
-                else:
-                    data = tex_template.replace("@@BODYTOKEN@@", data)
-                    data = data.replace("@@DOCUMENTCLASSTOKEN@@", document_class)
-        except FileNotFoundError:
-            raise InputException("not_template", template)
-    try:
-        with open(outpath, mode="w") as fh:
-            fh.write(data)
-    except FileNotFoundError:
-        raise InputException("not_outpath", outpath)
 
-    click.echo(f"FINISHED - file conversion completed and saved to `{outpath}`")
-    return data
+
+    # ==================== BUILD + WRITE OUTPUT TO FILE ==================== #
+    if write_stdout:
+        print(data)
+    else:        
+        if tex is True:  # create full tex file.
+            try:
+                with open(template, mode="r") as fh:
+                    tex_template = fh.read()
+                    if "@@BODYTOKEN@@" not in tex_template:
+                        raise InputException("template_no_token", template)
+                    else:
+                        data = tex_template.replace("@@BODYTOKEN@@", data)
+                        data = data.replace("@@DOCUMENTCLASSTOKEN@@", document_class)
+            except FileNotFoundError:
+                raise InputException("not_template", template)
+        try:
+            with open(outpath, mode="w") as fh:
+                fh.write(data)
+                click.echo(f"FINISHED - file conversion completed and saved to `{outpath}`") 
+        except FileNotFoundError:
+            raise InputException("not_outpath", outpath)
+    
+    return
+    
