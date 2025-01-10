@@ -67,7 +67,7 @@ def md2tex(
                      the headers are numbered by default.
     :param make_out_dirs: wether or not to create non-existant output directories
     :param document_class: the document class of the tex document. defaults to `article`
-    :return: data, a string representation of the .md file converted to .tex
+    :return: None
     """
     # ==================== PROCESS THE ARGUMENTS ==================== #
     if not re.search(r"\.md$", inpath):
@@ -95,27 +95,7 @@ def md2tex(
     # open file and read contents
     with open(inpath, mode="r") as fh:
         data = fh.read()
-
-    # ==================== CONVERT THE FILE ==================== #
-    # complex replacements
-    data = MDCode.block_code(data)  # the contents of code blocks must be interpreted verbatim;
-    #                                 this function comes first so that they won't be changed
-    #                                 by `prepare_markdown()`
-    data, codedict = MDCleaner.prepare_markdown(data)  # escape special chars + remove code envs from the pipeline
-    data = MDFrontmatter.convert(data)
-    data = MDQuote.inline_quote(data, french_quote)
-    data = MDQuote.block_quote(data)
-    data = MDList.unordered_l(data)
-    data = MDList.ordered_l(data)
-    data = MDReference.footnote(data)
-    data = MDHeader.convert(data, unnumbered, document_class)
-
-    # "simple" replacements. simple_sub contains regexes as keys
-    # and values, facilitating the regex replacement
-    data = MDSimple.convert(data)
-    data = MDCleaner.clean_tex(data, codedict)  # clean the tex file + reinject the escaped code blocks
-
-
+        data = convert(data, french_quote, unnumbered, document_class)
 
     # ==================== BUILD + WRITE OUTPUT TO FILE ==================== #
     if write_stdout:
@@ -141,3 +121,24 @@ def md2tex(
     
     return
     
+def convert(data, french_quote=False, unnumbered=False, document_class="article"):
+    
+    # complex replacements
+    data = MDCode.block_code(data)  # the contents of code blocks must be interpreted verbatim;
+    #                                 this function comes first so that they won't be changed
+    #                                 by `prepare_markdown()`
+    data, codedict = MDCleaner.prepare_markdown(data)  # escape special chars + remove code envs from the pipeline
+    data = MDFrontmatter.convert(data)
+    data = MDQuote.inline_quote(data, french_quote)
+    data = MDQuote.block_quote(data)
+    data = MDList.unordered_l(data)
+    data = MDList.ordered_l(data)
+    data = MDReference.footnote(data)
+    data = MDHeader.convert(data, unnumbered, document_class)
+
+    # "simple" replacements. simple_sub contains regexes as keys
+    # and values, facilitating the regex replacement
+    data = MDSimple.convert(data)
+    data = MDCleaner.clean_tex(data, codedict)  # clean the tex file + reinject the escaped code blocks
+
+    return(data)

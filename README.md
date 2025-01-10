@@ -12,7 +12,7 @@ expressions and translates them into TeX syntax. It has only been tested with la
   template
 - Reading Markdown from custom locations and writing a TeX file to a custom location
 - Several options for extra customization: type of quotes inline quotes, numbered or unnumbered headers, document classes...
-
+- Core functionality (converting Markdown to Tex) can be used in other Python scripts as a module
 ---
 
 ## Commands / How to 
@@ -147,7 +147,18 @@ md2tex README.md -c -o ./examples/README_article_default_template_numbered.tex
 md2tex README.md -c -o ./examples/README_book_default_template.tex -d book
 ```
 
----
+## Usage in other Python scripts
+
+The core functionality (conversion from Markdown to Tex) can be used in other Python scripts like this:
+```python
+from md2tex import convert
+
+markdown = "# A title"
+tex = convert(markdown)
+print(tex)  # Prints: \section{A title}
+```
+
+The `convert` function takes three optional, additional arguments corresponding to the command line arguments --french-quote, --unnumbered-headers, and --document-class.
 
 ## Markdown syntax
 
@@ -298,4 +309,5 @@ to an item in a list in a list). This will **not** stop the script, the indentat
 ---
 
 ## License and credits
-Developped by Paul Kervegan in August 2022 and released under GNU GPL v3.
+Developed by Paul Kervegan in August 2022 and released under GNU GPL v3.
+Features added by Anders Eskildsen in January 2025.
