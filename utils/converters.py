@@ -239,7 +239,7 @@ class MDList:
                     items += "\\item " + li[0] + "\n"
                 prev = li[1]
 
-            items += "\\end{itemize}\n" * prev  # close the remaining nested envs
+            items += "\\end{enumerate}\n" * prev  # close the remaining nested envs
 
             # once the list of \item and possibly nested `enumerate` is built,
             # build the final enumerate, add it to the markdown string and that's it !
