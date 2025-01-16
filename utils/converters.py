@@ -24,14 +24,13 @@ class MDSimple:
         r"(?<!\*)\*{2}(?!\*)(.+?)(?<!\*)\*{2}(?!\*)": r"\\textbf{\1}",  # bold
         r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)": r"\\textit{\1}",  # italics
         
-        # images and hyperlink
-        r"(?<!!)\[(.*?)\]\((.*?)\)": r"\\href{\2}{\1}",  # hyperlink
+        # images
         r"!\[(.*?)\]\((.*?)\)": r"""
 \\begin{figure}[h!]
     \\centering
     \\includegraphics[width=\\linewidth]{\2}
     \\caption{\1}
-\\end{figure}""",  # images
+\\end{figure}""",
 
         # separators
         r"-{3,}": r"\\par\\noindent\\rule{\\linewidth}{0.4pt}",  # horizontal line
@@ -408,6 +407,29 @@ class MDReference:
         string = re.sub(r"(\[\\\^\d+\]:)(.+\n?)*", "", string, flags=re.M)
 
         return string
+    
+    @staticmethod
+    def hyperlink(string: str):
+        r"""
+        translate a markdown hyperlink to a latex hyperlink
+        :param string: the string representation of a markdown file
+        :return: the updated string representation
+        """
+
+        links = re.finditer(r"(?<!!)\[(.*?)\]\((.*?)\)", string)
+        for link in links:
+            if link[2].startswith("http"):
+                # External URL
+                string = string.replace(link[0], r"\href{" + link[2] + r"}{" + link[1] + r"}")
+            else: # We are dealing with some other link, likely to another internal document
+                # In LaTeX, we need a \label{} as a target when we link to somewhere else in our document.
+                # This is not done automatically, since we don't know how link targets are organized.
+                # Adding labels to sections is possible, but how would we programmatically know
+                # which label to use so it corresponds to link targets?
+                Warning("link_type_not_supported", link[2])
+
+        return string
+
 
 
 class MDCleaner:

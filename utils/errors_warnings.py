@@ -75,6 +75,7 @@ class Warnings:
         "outpath_extension": "WARNING - file extension of output file `@@TOKEN@@` changed to `.tex`",
         "list_deep_nesting": "WARNING - deep list nesting. you may need to change base tex options in the header.",
         "lang_not_supported": "WARNING - language `@@TOKEN@@` is not supported by minted/Pygments. see https://pygments.org/languages/ for a list of supported languages.",
+        "link_type_not_supported": "WARNING - type of link `@@TOKEN@@` is not supported. leaving as is...",
     }
 
     def __init__(self, key, val=None):

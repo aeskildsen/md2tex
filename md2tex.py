@@ -165,6 +165,7 @@ def convert(data, french_quote=False, unnumbered=False, document_class="article"
     data = MDList.unordered_l(data)
     data = MDList.ordered_l(data)
     data = MDReference.footnote(data)
+    data = MDReference.hyperlink(data)
     data = MDHeader.convert(data, unnumbered, document_class)
 
     # "simple" replacements. simple_sub contains regexes as keys
