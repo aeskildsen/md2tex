@@ -466,7 +466,7 @@ class MDCleaner:
         string = string.replace("$", r"\$")
         string = string.replace("%", r"\%")
         string = string.replace(r"$", r"\&")
-        string = string.replace(r"~", r"\~")
+        #string = string.replace(r"~", r"\~") # leads to an error if ~ is used in an inline quote
         string = string.replace("_", r"\_")
         string = string.replace("&", r"\&")
         string = re.sub("\^", r"\\^", string, flags=re.M)
