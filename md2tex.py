@@ -5,6 +5,7 @@ import os
 
 from utils.converters import MDSimple, MDQuote, MDList, MDCode, MDCleaner, MDReference, MDHeader, MDFrontmatter
 from utils.errors_warnings import InputException, Warnings
+from utils.minted import languages
 
 
 @click.command("md2tex")
@@ -34,6 +35,9 @@ from utils.errors_warnings import InputException, Warnings
                    + "are: `book`|`article`. defaults to `article`")
 @click.option("-s", "--stdout", "write_stdout", is_flag=True, default=False,
               help="optional. if provided, output wil be written to stdout instead of the output path.")
+@click.option("-l", "--minted-language", "minted_language", is_flag=False,
+              default="text",
+              help="optional. if provided, the string is used to specify language for source code highlighting within `minted` environments (will be overridden if source Markdown has language specified locally, e.g. in code blocks).")
 
 def md2tex(
         inpath: str,
@@ -43,7 +47,8 @@ def md2tex(
         french_quote=False,
         unnumbered=False,
         document_class="article",
-        write_stdout=False
+        write_stdout=False,
+        minted_language="text"
 ):
     """
     convert a Markdown file to a TeX file.
@@ -67,6 +72,8 @@ def md2tex(
                      the headers are numbered by default.
     :param make_out_dirs: wether or not to create non-existant output directories
     :param document_class: the document class of the tex document. defaults to `article`
+    :param write_stdout: whether to write the output to stdout instead of a file
+    :param minted_language: the default language for minted code blocks
     :return: None
     """
     # ==================== PROCESS THE ARGUMENTS ==================== #
@@ -95,7 +102,7 @@ def md2tex(
     # open file and read contents
     with open(inpath, mode="r") as fh:
         data = fh.read()
-        data = convert(data, french_quote, unnumbered, document_class)
+        data = convert(data, french_quote, unnumbered, document_class, minted_language)
 
     # ==================== BUILD + WRITE OUTPUT TO FILE ==================== #
     if write_stdout:
@@ -121,12 +128,36 @@ def md2tex(
     
     return
     
-def convert(data, french_quote=False, unnumbered=False, document_class="article"):
-    
+def convert(data, french_quote=False, unnumbered=False, document_class="article", minted_language="text"):
+    """
+    convert Markdown-formatted text to TeX code.
+
+    \b
+    parameters (see options if you are in `--help` mode):
+    -----------------------------------------------------
+    :param data: the string containing the markdown-formatted text
+    :param french_quote: whether to translate "" and '' as english tex quotes (``")
+                          or french quotes (\enquote{})
+    :param unnumbered: whether to convert headers as numbered chapters/sections (`\chapter{}`)
+                     or as unnumbered ones (`\chapter*{}`). defaults to False:
+                     the headers are numbered by default.
+    :param document_class: the document class of the tex document. defaults to `article`
+    :param minted_language: the default language for minted code blocks
+    :return: The converted TeX code
+    """
+
+    # process language specification
+    if minted_language in languages:
+        lang = minted_language
+    else:
+        Warnings("lang_not_supported", minted_language)
+        lang = "text"
+
     # complex replacements
-    data = MDCode.block_code(data)  # the contents of code blocks must be interpreted verbatim;
-    #                                 this function comes first so that they won't be changed
-    #                                 by `prepare_markdown()`
+    data = MDCode.block_code(data, lang)              #  the contents of code blocks and inline code strings
+    data = MDCode.inline_code(data, lang)             #  must be interpreted verbatim. therefore,
+    #                                                    these functions come first so that they won't be changed
+    #                                                    by `prepare_markdown()`
     data, codedict = MDCleaner.prepare_markdown(data)  # escape special chars + remove code envs from the pipeline
     data = MDFrontmatter.convert(data)
     data = MDQuote.inline_quote(data, french_quote)

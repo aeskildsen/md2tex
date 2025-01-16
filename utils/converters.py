@@ -1,8 +1,9 @@
 import re
+from itertools import chain
 
 from .minted import languages
 from .helpers import process_list_indentation
-
+from .errors_warnings import Warnings
 
 # ---------------------------------------------------------------
 # regex based conversion from markdown to latex;
@@ -22,8 +23,7 @@ class MDSimple:
         # code, bold, italics
         r"(?<!\*)\*{2}(?!\*)(.+?)(?<!\*)\*{2}(?!\*)": r"\\textbf{\1}",  # bold
         r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)": r"\\textit{\1}",  # italics
-        r"(?<!`)`(?!`)(.+?)(?<!`)`(?!`)": r"\\texttt{\1}",  # inline code
-
+        
         # images and hyperlink
         r"(?<!!)\[(.*?)\]\((.*?)\)": r"\\href{\2}{\1}",  # hyperlink
         r"!\[(.*?)\]\((.*?)\)": r"""
@@ -253,24 +253,45 @@ class MDList:
 
 class MDCode:
     """
-    block code substitution
+    block and inline code substitution
 
     contains
     --------
     block_code(): create a latex minted or lstlisting env from a md block of code
+    inline_code(): create a latex mintinline env from inline md code
     """
     @staticmethod
-    def block_code(string: str):
+    def inline_code(string: str, language: str):
         """
-        translate a markdown block of code into a minted or listing block.
+        translate inline code in markdown-formatted text into a mintinline environment. Optionally specify a language for minted to use for syntax highlighting.
+
+        :param string: the string representation of the markdown file
+        :param language: a string specifying the language to use for syntax highlighting, see https://pygments.org/docs/lexers/
+        :return: the updated string representation
+        """
+        
+        matches = re.finditer(r"`([^`^\n]+)`", string)
+        for m in matches:
+            code = m[0]
+            inline_snippet = r"\mintinline{" + language + r"}{" + m[1] + r"}"
+            string = string.replace(code, inline_snippet)
+        
+        return string
+
+    @staticmethod
+    def block_code(string: str, language):
+        """
+        translate a markdown block of code into a minted environment.
         
         the function tries to match a md block code "```...```". if the
-        block of code is matched, it extracts a code language and checks
-        if it is supported by minted/pygments.
-        - if it is supported, a `minted` env is created inside a `listing` 
-          env; the code is included in this env and will be coloured in latex
-        - if no language is supplied in the markdown file, then the whole block
-          is included as is in a `lstlisting` env.
+        block of code is matched, the code body is inserted into a minted environment.
+
+        the function also tries to extract the following from the first line of the code block:
+        - a code language specification, which is checked for support
+          by minted/pygments (defaulting to "text" if not supported).
+        - a title, which is converted to a caption if present.
+        - hl_lines, which is converted to a minted option if present.
+
         :param string: the string representation of the markdown file
         :return: the updated string representation of a markdown file
         """
@@ -279,53 +300,53 @@ class MDCode:
             code = m[0]  # isolate the block of code
             string = string.replace(code, "@@MINTEDTOKEN@@")  # to reinject code to string later
 
-            # extract info string possibly containing language and title/caption
+            # extract info string
             info_string = re.search(r"```([^\n]*)$", code, flags=re.M)[0].replace("```", "").strip()  # ugly but works
-            metadata = {}
+            
+            env = r"""
+\begin{listing}[H]
+\begin{minted}{@@LANGTOKEN@@}
+@@CODETOKEN@@
+\end{minted}
+@@CAPTIONTOKEN@@
+\end{listing}"""  # env to add the code to; ugly indentation to avoid messing up the .tex file
+
+            # extract code body
+            code_body = re.sub(r"```.*?\n((.|\n)+?)```", r"\1", code, flags=re.M)  
+            # add code body to the latex env
+            env = env.replace("@@CODETOKEN@@", code_body)
+            
             # assume language is the first word in the info string
             # cf. https://spec.commonmark.org/0.31.2/#fenced-code-blocks
-            lang = re.search(r'^([0-9A-Za-z_-]+) *', info_string)
-            metadata['lang'] = lang[1] if lang else None 
+            lang_info = re.search(r'^([0-9A-Za-z_-]+) *', info_string)
+            if lang_info:
+                lang = lang_info[1]
+            # if the used language is supported by minted, create a minted inside
+            # a listing environment to hold the code
+                if not lang in languages:
+                    Warnings("lang_not_supported", lang)
+                    lang = "text"
+            else:
+                lang = "text"
+            # add code language specification to the latex env
+            env = env.replace("@@LANGTOKEN@@", lang)
             
             # titles specified like title="A nice code block" in the info string
             # will be converted to captions
-            title = re.search(r'title="([^"]+)"', info_string)
-            metadata['title'] = title[1] if title else None
+            title_info = re.search(r'title="([^"]+)"', info_string)
+            if title_info:
+                env = env.replace("@@CAPTIONTOKEN@@", r'\caption{' + title_info[1] + r'}')
+            else:  # remove captiontoken line
+                env = env.replace("@@CAPTIONTOKEN@@\n","")
 
-            # if the used language is supported by minted, create a minted inside
-            # a listing environment to hold the code
-            if metadata['lang'] in languages:
-                env = r"""
-\begin{listing}[h!]
-    \begin{minted}{@@LANGTOKEN@@}
-@@CODETOKEN@@
-    \end{minted}
-    @@CAPTIONTOKEN@@
-\end{listing}"""  # env to add the code to; ugly indentation to avoid messing up the .tex file
-                code = re.sub(r"```.*?\n((.|\n)+?)```", r"\1", code, flags=re.M)  # extract code body
-                code = env.replace("@@LANGTOKEN@@", metadata['lang']).replace("@@CODETOKEN@@", code)  # add code to the latex env
-                
-                if metadata['title']: # add a caption if a codeblock title was found
-                    code = code.replace("@@CAPTIONTOKEN@@", r'\caption{' + metadata['title'] + r'}')
-                else:  # remove captiontoken line
-                    code = code.replace("    @@CAPTIONTOKEN@@\n","")
+            # highlight lines specified like hl_lines="1 11 4-6" in the info string
+            hl_lines_info = re.search(r'hl_lines="([^"]+)"', info_string)
+            if hl_lines_info:
+                lines = ", ".join(hl_lines_info[1].split(" ")) # add commas to hl_lines
+                env = env.replace(r"begin{minted}", r"begin{minted}[highlightlines={" + lines + r"}]")
 
-            # if the langage is not supported (or if the characters after the opening ```
-            # aren't a language), only create a lstlisting environment and reinject the code
-            # in it
-            else:
-                env = r"""
-\begin{lstlisting}@@CAPTIONTOKEN@@
-@@CODETOKEN@@
-\end{lstlisting}
-                """  # env to add the code to
-                code = env.replace("@@CODETOKEN@@", re.sub(r"```.*\n", "", code, flags=re.M))  # reinject code block to env
-                if metadata['title']:
-                    code = code.replace("@@CAPTIONTOKEN@@", f"[caption={metadata['title']}]")
-                else:
-                    code = code.replace("@@CAPTIONTOKEN@@", "")
-
-            string = string.replace("@@MINTEDTOKEN@@", code)  # reinject latex code to string
+            # reinject latex code to string
+            string = string.replace("@@MINTEDTOKEN@@", env)
 
         return string
 
@@ -393,8 +414,8 @@ class MDCleaner:
     contains
     --------
     prepare_markdown(): replace markdown document by escaping special tex characters and
-                        removing code blocks from the rest of the pipeline
-    clean_tex(): clean the tex created and reinsert blocks of code at the end of the pipeline
+                        removing code substrings from the rest of the pipeline
+    clean_tex(): clean the tex created and reinsert code substrings at the end of the pipeline
     """
     @staticmethod
     def prepare_markdown(string: str):
@@ -405,10 +426,10 @@ class MDCleaner:
         - escape latex special characters. this is also useful because of our use of
           `_` in `@@*TOKEN*@@` strings used for replacements.
 
-        this function is used after `block_code()` to avoid replacing
+        this function is used after `block_code()` and `inline_code()` to avoid replacing
         special characters that should be interpreted verbatim by LaTeX.
-        to escape all `minted` and `lstlisting` code we use a dict that stores all
-        these blocks of code.
+        to escape all `minted`, `lstlisting`, and `mintinline` code we use a dict that stores all
+        these substrings of code.
 
         :param string: the string representation of a markdown file
         :return: the updated string representation of a markdown file
@@ -421,15 +442,18 @@ class MDCleaner:
         # for that, store all code blocks in a dict, replace them in `string`
         # with a special token. this token uses `+` because they aren't LaTeX
         # special characters
-        codematch = re.finditer(r"\\begin\{(listing|lstlisting)}(.|\n)*?\\end\{(listing|lstlisting)}", string, flags=re.M)
+        block_codematch = re.finditer(r"\\begin\{(listing|lstlisting)}(.|\n)*?\\end\{(listing|lstlisting)}", string, flags=re.M)
+        inline_codematch = re.finditer(r"\\mintinline{.*}{.*}", string, flags=re.M)
         n = 0
         codedict = {}
-        for match in codematch:
-            block = match[0]  # extract text
-            string = string.replace(block, f"@@CODETOKEN{n}@@")
-            codedict[f"@@CODETOKEN{n}@@"] = block
-            n += 1
+        for match in chain(block_codematch, inline_codematch):
+            code = match[0]  # extract text
+            string = string.replace(code, f"@@CODETOKEN{n}@@")
+            codedict[f"@@CODETOKEN{n}@@"] = code
+            n += 1        
 
+        string = string.replace("{==", "") # begin highlight (removed)
+        string = string.replace("==}", "") # end highlight (removed)
         string = string.replace(r"{", r"\{")
         string = string.replace(r"}", r"\}")
         # string = re.sub("(?<![^\]]\[)\^", r"\^", string, flags=re.M)
