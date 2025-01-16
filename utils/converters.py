@@ -468,6 +468,7 @@ class MDCleaner:
         string = string.replace(r"$", r"\&")
         string = string.replace(r"~", r"\~")
         string = string.replace("_", r"\_")
+        string = string.replace("&", r"\&")
         string = re.sub("\^", r"\\^", string, flags=re.M)
         # print(string)
 
