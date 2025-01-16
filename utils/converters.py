@@ -228,6 +228,9 @@ class MDList:
             items = ""
             prev = 0  # previous indentation level
             for li in lsitems:
+                # remove numbering and whitespace
+                li[0] = re.sub(r"^[ \t]*\d+\. *", "", li[0])
+                
                 # open/close the good number of envs
                 if li[1] - prev > 0:  # if there are envs to open; shouldn't be > 1 env to open, but just in case
                     items += "\\begin{enumerate} \n \\item " * (li[1] - prev)
