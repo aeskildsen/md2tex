@@ -472,15 +472,16 @@ class MDCleaner:
         # for that, store all code blocks in a dict, replace them in `string`
         # with a special token. this token uses `+` because they aren't LaTeX
         # special characters
-        block_codematch = re.finditer(r"\\begin\{(listing|lstlisting)}(.|\n)*?\\end\{(listing|lstlisting)}", string, flags=re.M)
-        inline_codematch = re.finditer(r"\\mintinline{.*}{.*}", string, flags=re.M)
+        block_codematch = re.finditer(r"\\begin\{listing}(.|\n)*?\\end\{listing}", string, flags=re.M)
+        inline_codematch = re.finditer(r"\\mintinline\{.*?\}\{.*?\}", string, flags=re.M)
+
         n = 0
         codedict = {}
         for match in chain(block_codematch, inline_codematch):
             code = match[0]  # extract text
             string = string.replace(code, f"@@CODETOKEN{n}@@")
             codedict[f"@@CODETOKEN{n}@@"] = code
-            n += 1        
+            n += 1
 
         string = string.replace("{==", "") # begin highlight (removed)
         string = string.replace("==}", "") # end highlight (removed)
