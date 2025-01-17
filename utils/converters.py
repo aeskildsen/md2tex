@@ -263,25 +263,25 @@ class MDCode:
     inline_code(): create a latex mintinline env from inline md code
     """
     @staticmethod
-    def inline_code(string: str, language: str):
+    def inline_code(string: str, minted_language: str):
         """
         translate inline code in markdown-formatted text into a mintinline environment. Optionally specify a language for minted to use for syntax highlighting.
 
         :param string: the string representation of the markdown file
-        :param language: a string specifying the language to use for syntax highlighting, see https://pygments.org/docs/lexers/
+        :param minted_language: a string specifying the language to use for syntax highlighting, see https://pygments.org/docs/lexers/
         :return: the updated string representation
         """
         
         matches = re.finditer(r"`([^`^\n]+)`", string)
         for m in matches:
             code = m[0]
-            inline_snippet = r"\mintinline{" + language + r"}{" + m[1] + r"}"
+            inline_snippet = r"\mintinline{" + minted_language + r"}{" + m[1] + r"}"
             string = string.replace(code, inline_snippet)
         
         return string
 
     @staticmethod
-    def block_code(string: str, language):
+    def block_code(string: str, minted_language, override_language: bool):
         """
         translate a markdown block of code into a minted environment.
         
@@ -295,6 +295,8 @@ class MDCode:
         - hl_lines, which is converted to a minted option if present.
 
         :param string: the string representation of the markdown file
+        :param minted_language: language to specify for syntax highlighting with minted
+        :param override_language: a boolean to determine whether existing language spec should be overridden
         :return: the updated string representation of a markdown file
         """
         matches = re.finditer(r"```((.|\n)*?)```", string, flags=re.M)
@@ -318,18 +320,21 @@ class MDCode:
             # add code body to the latex env
             env = env.replace("@@CODETOKEN@@", code_body)
             
-            # assume language is the first word in the info string
-            # cf. https://spec.commonmark.org/0.31.2/#fenced-code-blocks
-            lang_info = re.search(r'^([0-9A-Za-z_-]+) *', info_string)
-            if lang_info:
-                lang = lang_info[1]
-            # if the used language is supported by minted, create a minted inside
-            # a listing environment to hold the code
-                if not lang in languages:
-                    Warnings("lang_not_supported", lang)
-                    lang = "text"
+            if override_language:
+                lang = minted_language
             else:
-                lang = "text"
+                # assume language is the first word in the info string
+                # cf. https://spec.commonmark.org/0.31.2/#fenced-code-blocks
+                lang_info = re.search(r'^([0-9A-Za-z_-]+) *', info_string)
+                if lang_info:
+                    lang = lang_info[1]
+                # if the used language is supported by minted, create a minted inside
+                # a listing environment to hold the code
+                    if not lang in languages:
+                        Warnings("lang_not_supported", lang)
+                        lang = "text"
+                else:
+                    lang = "text"
             # add code language specification to the latex env
             env = env.replace("@@LANGTOKEN@@", lang)
             
