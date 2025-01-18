@@ -150,12 +150,10 @@ def convert(data, french_quote=False, unnumbered=False, document_class="article"
     """
 
     # process language specification
-    if minted_language in languages:
-        lang = minted_language
-    else:
-        Warnings("lang_not_supported", minted_language)
-        lang = "text"
-
+    if not minted_language in languages:
+        Warnings("lang_not_supported", minted_language)    
+    lang = minted_language
+    
     # complex replacements
     data = MDCode.block_code(data, lang, override_language) #  the contents of code blocks and inline code strings
     data = MDCode.inline_code(data, lang)                   #  must be interpreted verbatim. therefore,
