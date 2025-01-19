@@ -150,8 +150,8 @@ def convert(data, french_quote=False, unnumbered=False, document_class="article"
     """
 
     # process language specification
-    if not minted_language in languages:
-        Warnings("lang_not_supported", minted_language)    
+    if (not minted_language in languages) and (not override_language):
+        Warnings("lang_not_supported", minted_language)
     lang = minted_language
     
     # complex replacements
