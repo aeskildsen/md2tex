@@ -115,7 +115,7 @@ class MDHeader:
 
 
 class MDQuote:
-    """
+    r"""
     inline and block quote substitution
 
     contains
@@ -125,7 +125,7 @@ class MDQuote:
     """
     @staticmethod
     def block_quote(string: str):
-        """
+        r"""
         replace a markdown quote ">" with a latex quote (\quote{}).
         works in multiline mode.
 
@@ -141,7 +141,7 @@ class MDQuote:
 
     @staticmethod
     def inline_quote(string: str, french_quote: bool):
-        """
+        r"""
         convert the markdown quotes to LaTeX.
         :param string: the string representation of the markdown file
         :param french_quote: translate the quotes as french quotes (\enquote{})
@@ -396,7 +396,7 @@ class MDReference:
                 )  # match the proper footnote (with the good key)
                 texnote = re.sub(r"\s+", " ", fnote[0].replace(fnote[1], ""))  # remove the pointer + normalize space
 
-                if not re.search("^\s*$", texnote):  # if the note isn't empty; else, delete it
+                if not re.search(r"^\s*$", texnote):  # if the note isn't empty; else, delete it
                     texnote = r"\footnote{" + texnote + "}"
                     string = string.replace(fnote[0], "")  # delete the markdown footnote
                     string = string.replace(pointer, texnote)  # add the \footnote to string
@@ -500,7 +500,7 @@ class MDCleaner:
         #string = string.replace(r"~", r"\~") # leads to an error if ~ is used in an inline quote
         string = string.replace("_", r"\_")
         string = string.replace("&", r"\&")
-        string = re.sub("\^", r"\\^", string, flags=re.M)
+        string = re.sub(r"\^", r"\\^", string, flags=re.M)
         # print(string)
 
         return string, codedict
