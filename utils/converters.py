@@ -24,6 +24,9 @@ class MDSimple:
         r"(?<!\*)\*{2}(?!\*)(.+?)(?<!\*)\*{2}(?!\*)": r"\\textbf{\1}",  # bold
         r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)": r"\\textit{\1}",  # italics
         
+        # audio files are currently not well-supported in LaTeX -> pdf
+        # so we turn it into a TeX comment for now
+        r"!\[type:audio\]\((.+?)\)": r"%AUDIO_FILE:\1",
         # images
         r"!\[(.*?)\]\((.*?)\)": r"""
 \\begin{figure}[h!]
