@@ -20,7 +20,7 @@ class MDSimple:
                 syntax, like "*", "`"...
     """
     simple_sub = {
-        # code, bold, italics
+        # bold, italics
         r"(?<!\*)\*{2}(?!\*)(.+?)(?<!\*)\*{2}(?!\*)": r"\\textbf{\1}",  # bold
         r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)": r"\\textit{\1}",  # italics
         
@@ -255,6 +255,42 @@ class MDList:
             string = string.replace("@@LISTTOKEN@@", enumerate)
 
         return string
+    
+    @staticmethod
+    def definition_l(string: str):
+        """
+        translate a markdown definition list (https://python-markdown.github.io/extensions/definition_lists/)
+        into a latex `description` environment. Might be a little buggy, but works for now.
+        :param string:  the string representation of the markdown file
+        :return: the updated string representation of a markdown file
+        """
+
+        # find all definition lists (searching here for two empy newlines to delimit
+        # definitions instead of one because of extra newlines introduced by md2tex)
+        lists = re.finditer(r"((^.+?)\n(?: *\n){2}: {3}(.+?\n(?: {4}.+?\n)*(?: *\n){2}))+", string, flags=re.MULTILINE)
+        
+        for ls in lists:
+            # prepare to build a list
+            lstext = ls[0]  # extract list text
+            string = string.replace(lstext, "@@LISTTOKEN@@")  # add token to source
+            
+            # build the `\description{}` env
+            desc = "\\begin{description}\n"
+            
+            items = re.finditer(r"(^.+?)\n(?: *\n){2}: {3}(.+?\n(?: {4}.+?\n)*)(?: *\n){2}", lstext, flags=re.MULTILINE)
+            for item in items:
+                term = item.group(1)
+                definition = item.group(2)
+                definition = re.sub(r"^[:| ]{4}", "", definition, flags=re.M)
+                definition = definition.strip()
+                desc = desc + "  \\item[" + term + "] " + definition + "\n"
+            
+            desc = desc + "\\end{description}\n\n"
+
+            string = string.replace("@@LISTTOKEN@@", desc)
+
+        return string
+
 
 class MDCode:
     """
@@ -424,7 +460,7 @@ class MDReference:
         :return: the updated string representation
         """
 
-        links = re.finditer(r"(?<!!)\[(.*?)\]\((.*?)\)", string)
+        links = re.finditer(r"(?<!!)\[([^\n\{\}]*?)\]\((.*?)\)", string)
         for link in links:
             if link[2].startswith("http"):
                 # External URL
