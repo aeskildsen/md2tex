@@ -163,11 +163,19 @@ def convert(data, french_quote=False, unnumbered=False, document_class="article"
     data = MDFrontmatter.convert(data)
     data = MDQuote.inline_quote(data, french_quote)
     data = MDQuote.block_quote(data)
+<<<<<<< HEAD
     data = MDReference.hyperlink(data)
     data = MDList.definition_l(data)
     data = MDList.unordered_l(data)
     data = MDList.ordered_l(data)
     data = MDReference.footnote(data)
+=======
+    data = MDReference.footnote(data)
+    data = MDReference.hyperlink(data)
+    data = MDList.definition_l(data)
+    data = MDList.unordered_l(data)
+    data = MDList.ordered_l(data)
+>>>>>>> a7632a6 (add feature: parsing markdown definition lists)
     data = MDHeader.convert(data, unnumbered, document_class)
 
     # "simple" replacements. simple_sub contains regexes as keys

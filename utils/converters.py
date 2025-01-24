@@ -409,7 +409,7 @@ class MDReference:
     @staticmethod
     def footnote(string: str):
         r"""
-        translate a markdown footnode `[^\d+]` to a latex footnote (`\footnote{}`)
+        translate a markdown footnote `[^\d+]` to a latex footnote (`\footnote{}`)
 
         the structure of a markdown footnote:
         - This is the body of the text [^1] <-- body of the text
@@ -421,25 +421,25 @@ class MDReference:
 
         :param string: the string representation of a markdown file
         """
-        footnotes = re.finditer(r"\[\\\^\d+\](?![ \t]*:)", string, flags=re.M)
-        for match in footnotes:
+        fnote_pointers = re.finditer(r"\[\\\^\d+\](?![ \t]*:)", string, flags=re.M)
+        for match in fnote_pointers:
             try:
                 pointer = match[0]  # extract the footnote pointer (the pointer to the actual footnote)
-                key = re.search(r"\d+", pointer)[0]  # extract the footnote n°
-                fnote = re.search(
-                    fr"(\[\\\^%s\]:)(.+\n?)*" % key,
+                fnote_num = re.search(r"\d+", pointer)[0]  # extract the footnote n°
+                fnote_text = re.search(
+                    r"^(\[\\\^" + fnote_num + r"\]:) *(.+\n?)",
                     string, flags=re.M
-                )  # match the proper footnote (with the good key)
-                texnote = re.sub(r"\s+", " ", fnote[0].replace(fnote[1], ""))  # remove the pointer + normalize space
+                )  # match the proper footnote (with the good fnote_num)
+                texnote = re.sub(r"\s+", " ", fnote_text[0].replace(fnote_text[1], ""))  # remove the pointer + normalize space
 
                 if not re.search(r"^\s*$", texnote):  # if the note isn't empty; else, delete it
                     texnote = r"\footnote{" + texnote + "}"
-                    string = string.replace(fnote[0], "")  # delete the markdown footnote
+                    string = string.replace(fnote_text[0], "")  # delete the markdown footnote
                     string = string.replace(pointer, texnote)  # add the \footnote to string
                 else:
                     # delete the footnote body and pointers
                     string = string.replace(pointer, "")
-                    string = string.replace(fnote[0], "")
+                    string = string.replace(fnote_text[0], "")
 
             except TypeError:
                 # a footnote pointer may point to nothing; conversely, a footnote
