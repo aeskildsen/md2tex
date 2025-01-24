@@ -36,7 +36,7 @@ class MDSimple:
 \\end{figure}""",
 
         # separators
-        r"-{3,}": r"\\par\\noindent\\rule{\\linewidth}{0.4pt}",  # horizontal line
+        r"^(-_*){3,}": r"\\par\\noindent\\rule{\\linewidth}{0.4pt}",  # horizontal line
         r"<br/?>": "\n\n",  # line breaks
     }
 
