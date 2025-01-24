@@ -181,6 +181,7 @@ The `convert` function takes three optional, additional arguments corresponding 
     If additional tokens are added (for nested lists: `1. a.`), the list will be processed, but
     the second token (`a.`) will not be deleted. This is because the use of additional tokens is
     specific to the Markdown interpreter used.
+- Definition lists
 - Titles and different title levels
 - Images
 - URLs, both in text and as Markdown hyperlinks.
@@ -194,7 +195,6 @@ The `convert` function takes three optional, additional arguments corresponding 
 - Strikethrough
 - Emojis
 - Tasks lists
-- Definition lists
 - Text blocks inside lists will be processed as the continuation
   of a list item
 
