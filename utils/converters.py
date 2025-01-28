@@ -532,7 +532,6 @@ class MDCleaner:
             segments = re.split(r"\\mintinline", line[0])
             if len(segments) > 1:
                 for segment in segments[1:]:
-                    print(segment)
                     mintinline_args = re.finditer(r"(\{.*?\})(\{.*\})", segment, flags=re.M)
                     for match in mintinline_args:
                         arg1 = match[1]
