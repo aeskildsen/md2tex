@@ -523,17 +523,24 @@ class MDCleaner:
             n += 1
         
         # \mintinline envs are trickier to match, because we might match the
-        # closing } too soon or too late (greedy vs. lazy quantifiers)
-        # so we use a greedy quantifiyer and enlist a helper function
-        # to properly match the correct number of {}
-        inline_codematch = re.finditer(r"(\\mintinline\{.*?\})(\{.*\})", string, flags=re.M)
-        for match in inline_codematch:
-            mintinline_prefix = match[1]
-            code_arg = match[2]
-            code_arg = get_matching_brackets(code_arg)
-            codedict[f"@@CODETOKEN{n}@@"] = mintinline_prefix + code_arg
-            string = string.replace(match[0], f"@@CODETOKEN{n}@@")
-            n+=1
+        # closing } too soon or too late since it may be part of the code
+        # string. so we matches whole lines containing one ore more \mintinline
+        # commands, then we split those lines by the `\mintline` token.
+        # from there we use a helper function to extract the "outer" open/close
+        # brackets pair in that string, starting from its beginning.
+        for line in re.finditer(r"^.*\\mintinline.*$", string, re.M):
+            segments = re.split(r"\\mintinline", line[0])
+            if len(segments) > 1:
+                for segment in segments[1:]:
+                    print(segment)
+                    mintinline_args = re.finditer(r"(\{.*?\})(\{.*\})", segment, flags=re.M)
+                    for match in mintinline_args:
+                        arg1 = match[1]
+                        arg2 = get_matching_brackets(match[2])
+                        mintinline_command = "\\mintinline" + arg1 + arg2
+                        codedict[f"@@CODETOKEN{n}@@"] = mintinline_command
+                        string = string.replace(mintinline_command, f"@@CODETOKEN{n}@@")
+                        n+=1
 
 
         string = string.replace("{==", "") # begin highlight (removed)
