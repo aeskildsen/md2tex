@@ -430,7 +430,8 @@ class MDReference:
                     r"^(\[\\\^" + fnote_num + r"\]:) *(.+\n?)",
                     string, flags=re.M
                 )  # match the proper footnote (with the good fnote_num)
-                texnote = re.sub(r"\s+", " ", fnote_text[0].replace(fnote_text[1], ""))  # remove the pointer + normalize space
+                # remove the pointer + normalize space
+                texnote = re.sub(r"\s+", " ", fnote_text[0].replace(fnote_text[1], "")).strip()
 
                 if not re.search(r"^\s*$", texnote):  # if the note isn't empty; else, delete it
                     texnote = r"\footnote{" + texnote + "}"
