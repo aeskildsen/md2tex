@@ -75,3 +75,31 @@ def process_list_indentation(lstext):
             prev = li[1]
 
     return lsitems
+
+
+def get_matching_brackets(code: str):
+    r"""
+    Finds and returns the substring of the input code contained by an 
+    outer pair of matching opening and closing curly brackets `{...}`, assuming that any inner pairs of brackets which are opened are closed again.
+    
+    Escaped brackets `\{` and `\}` are ignored.
+    
+    :param code: The input string containing code with curly brackets.
+    :return: The substring from the start of the input code up to and including
+             the matching closing bracket.
+    """
+    pos = 0
+    numOpened = 0
+    hasOpened = False
+    for c in code:
+        if c == '{' and code[pos-1] != "\\":
+            numOpened += 1
+            hasOpened = True
+        elif c == '}' and code[pos-1] != "\\":
+            numOpened -= 1
+            if numOpened == 0 and hasOpened:
+                # we found the closing bracket
+                pos += 1
+                break
+        pos += 1
+    return code[:pos]

@@ -2,7 +2,7 @@ import re
 from itertools import chain
 
 from .minted import languages
-from .helpers import process_list_indentation
+from .helpers import process_list_indentation, get_matching_brackets
 from .errors_warnings import Warnings
 
 # ---------------------------------------------------------------
@@ -311,10 +311,10 @@ class MDCode:
         :return: the updated string representation
         """
         
-        matches = re.finditer(r"`([^`^\n]+)`", string)
+        matches = re.finditer(r"`(.+?)`", string)
         for m in matches:
             code = m[0]
-            inline_snippet = r"\mintinline{" + minted_language + r"}{" + m[1] + r"}"
+            inline_snippet = r"\mintinline{" + minted_language + "}{" + m[1] + "}"
             string = string.replace(code, inline_snippet)
         
         return string
@@ -511,16 +511,29 @@ class MDCleaner:
         # for that, store all code blocks in a dict, replace them in `string`
         # with a special token. this token uses `+` because they aren't LaTeX
         # special characters
-        block_codematch = re.finditer(r"\\begin\{listing}(.|\n)*?\\end\{listing}", string, flags=re.M)
-        inline_codematch = re.finditer(r"\\mintinline\{.*?\}\{.*?\}", string, flags=re.M)
-
         n = 0
         codedict = {}
-        for match in chain(block_codematch, inline_codematch):
+        
+        block_codematch = re.finditer(r"\\begin\{listing}(.|\n)*?\\end\{listing}", string, flags=re.M)
+        for match in block_codematch:
             code = match[0]  # extract text
             string = string.replace(code, f"@@CODETOKEN{n}@@")
             codedict[f"@@CODETOKEN{n}@@"] = code
             n += 1
+        
+        # \mintinline envs are trickier to match, because we might match the
+        # closing } too soon or too late (greedy vs. lazy quantifiers)
+        # so we use a greedy quantifiyer and enlist a helper function
+        # to properly match the correct number of {}
+        inline_codematch = re.finditer(r"(\\mintinline\{.*?\})(\{.*\})", string, flags=re.M)
+        for match in inline_codematch:
+            mintinline_prefix = match[1]
+            code_arg = match[2]
+            code_arg = get_matching_brackets(code_arg)
+            codedict[f"@@CODETOKEN{n}@@"] = mintinline_prefix + code_arg
+            string = string.replace(match[0], f"@@CODETOKEN{n}@@")
+            n+=1
+
 
         string = string.replace("{==", "") # begin highlight (removed)
         string = string.replace("==}", "") # end highlight (removed)
