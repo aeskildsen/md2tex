@@ -27,11 +27,12 @@ class MDSimple:
         # audio files are currently not well-supported in LaTeX -> pdf
         # so we turn it into a TeX comment for now
         r"!\[type:audio\]\((.+?)\)": r"%AUDIO_FILE:\1",
+
         # images
-        r"!\[(.*?)\]\((.*?)\)": r"""
+        r"!\[(.*?)\]\((.*?)\)(?:\{: *\.w(\d+) *\})?": r"""
 \\begin{figure}[h!]
     \\centering
-    \\includegraphics[width=\\linewidth]{\2}
+    \\includegraphics[width=0.85\\textwidth]{\2}
     \\caption{\1}
 \\end{figure}""",
 
@@ -400,11 +401,12 @@ class MDCode:
 class MDReference:
     r"""
     substitutions for references inside a markdown document.
-    currently only for footnote substitutions
-
+    
     contains
     --------
     footnote(): replace markdown footnotes (`[\^\d+]`) into latex `\footnote{}`
+    hyperlink(): replace markdown hyperlinks into latex `\ref` or `\href`
+    reference(): replace pandoc-style references `[@doe1979]` into latex/natbib `\citep{@doe1979}`
     """
     @staticmethod
     def footnote(string: str):
@@ -461,7 +463,7 @@ class MDReference:
         :return: the updated string representation
         """
 
-        links = re.finditer(r"(?<!!)\[([^\n\{\}]*?)\]\((.*?)\)", string)
+        links = re.finditer(r"(?<!!)\[([^@\n\{\}]+?)\]\((.*?)\)", string)
         for link in links:
             if link[2].startswith("http"):
                 # External URL
@@ -474,7 +476,66 @@ class MDReference:
                 Warning("link_type_not_supported", link[2])
 
         return string
+    
+    @staticmethod
+    def citation(string: str):
+        r"""
+        translate a markdown pandoc-style citation like `[@doe1999]` to
+        \parencite{doe1999} citations compatible with biblatex (not bibtex!)
 
+        pandoc citation syntax spec: https://pandoc.org/chunkedhtml-demo/8.20-citation-syntax.html
+        biblatex docs: https://ctan.org/pkg/biblatex
+        
+        Input syntax:
+        - Citation form: [citationkey, locator]
+        - Citation key: `@doe1999` (`-@doe1999` will omit author name with the \parencite* command)
+        - Locator syntax: `p. 30`, `30`, `pp. 30-35`, `30-35` are the only valid forms
+        
+        Conversion examples:
+        - [@doe1999] -> \parencite{doe1999}
+        - [-@doe1999] -> \parencite*{doe1999}
+        - [@doe1999, 30] -> \parencite[p. 30]{doe1999}
+        - [@doe1999, p. 30] -> \parencite[p. 30]{doe1999}
+        - [@doe1999, 30-35] -> \parencite[pp. 30-35]{doe1999}
+        - [@doe1999, pp. 30-35] -> \parencite[pp. 30-35]{doe1999}
+        - [@doe1999; @smith] -> \parencite{doe1999, smith}
+        
+        Limitations:
+        - Prefix or suffix not supported currently
+        - Multiple sources in same citation are only supported in the basic form `[@doe1999; @smith2000]`, i.e. without locator or pre-/suffix
+
+        :param string: the string representation of a markdown file
+        :return: the updated string representation
+        """
+
+        # Use negative lookahead so we don't match links or images
+        ref_strings = re.finditer(r"\[(-?@[^\]]+)\](?!\()", string, re.M)
+        for ref_string in ref_strings:
+            tex_citation = ''
+            if ';' in ref_string[1]:
+                # multiple references in one citation
+                # -> simple mode
+                tex_citation = r"\parencite{" + ref_string[1].replace(';', ',') + "}"
+                tex_citation = tex_citation.replace('@', '')
+            else:
+                # only one citation, so we split into citation key and locator
+                ref_components = re.match(r"(-?@[^, ]+)(, (?:p\. )?(\d+\b(?!-))|, (?:pp\. )?(\d+-\d+))?", ref_string[1])
+                citation_key = ref_components[1]
+                locator = ref_components[3] or ref_components[4]
+                if ref_components[3]:
+                    tex_locator = f"[p. {locator}]"
+                elif ref_components[4]:
+                    tex_locator = f"[pp. {locator}]"
+                else:
+                    tex_locator = ''
+                if citation_key.startswith('-'):
+                    tex_citation = r" \parencite*" + tex_locator + "{" + citation_key[2:] + "}"
+                else:
+                    tex_citation = r" \parencite" + tex_locator + "{" + citation_key[1:] + "}"
+        
+            string = string.replace(ref_string[0], tex_citation)
+
+        return string
 
 
 class MDCleaner:

@@ -188,6 +188,7 @@ The `convert` function takes three optional, additional arguments corresponding 
 - Inline quotes : french and english style, nested quotes.
 - Footnotes. **Warning**: loose footnotes (references in the body that point to nothing
   or footnotes that point to nothing in the body) will be deleted.
+- Citations in pandoc-markdown style. **Warning**: Only rudimentary support.
 
 ### Currently unsupported
 
