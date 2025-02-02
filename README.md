@@ -1,8 +1,6 @@
 # `md2tex` - a CLI to convert Markdown to TeX
 
-`md2tex` is a simple but customizable markdown to TeX converter inspired by XSLT and functionnal programming. 
-Rather than using fancy object oriented libraries, it locates elements of Markdown syntax using regular 
-expressions and translates them into TeX syntax. It has only been tested with latin script so far.
+`md2tex` is a simple but customizable markdown to TeX converter inspired by XSLT and functionnal programming. Rather than using fancy object oriented libraries, it locates elements of Markdown syntax using regular expressions and translates them into TeX syntax. It has only been tested with latin script so far.
 
 ---
 
@@ -17,8 +15,7 @@ expressions and translates them into TeX syntax. It has only been tested with la
 
 ## Commands / How to 
 
-The advantage of having a script focused on Markdown to TeX conversion is that you can get a lot of fine tuning
-and extra customization.
+The advantage of having a script focused on Markdown to TeX conversion is that you can get a lot of fine tuning and extra customization.
 
 ### Requirements
 The script relies on the [`minted`](http://tug.ctan.org/macros/latex/contrib/minted/minted.pdf)[^1] package,
@@ -90,7 +87,7 @@ parameters are optional.
 	- if used with a custom TeX template (see `-c` and `-t`), the template must contain an `@@DOCUMENTCLASSTOKEN@@`
 	  in the preamble where the document class is specified so that the TeX document class can actually change.
 	- in fact, this argument only impacts the headers used in the TeX template.
-- **`-u`, `--unnumbered-headers`**: if this argument is provided, the TeX headers (`\chatper`, `section`...)
+- **`-u`, `--unnumbered-headers`**: if this argument is provided, the TeX headers (`\chapter`, `section`...)
   will be unnumbered.
 	- by default, the headers are numbered.
 - **`-f`, `--french-quote`**: if this argument is provided, anglo-saxon inline quotes will be replaced by
@@ -149,7 +146,7 @@ md2tex README.md -c -o ./examples/README_book_default_template.tex -d book
 
 ## Usage in other Python scripts
 
-The core functionality (conversion from Markdown to Tex) can be used in other Python scripts like this:
+The core functionality (conversion from Markdown to TeX) can be used in other Python scripts like this:
 ```python
 from md2tex import convert
 
@@ -311,4 +308,4 @@ to an item in a list in a list). This will **not** stop the script, the indentat
 
 ## License and credits
 Developed by Paul Kervegan in August 2022 and released under GNU GPL v3.
-Features added by Anders Eskildsen in January 2025.
+Features added by Anders Eskildsen in January-February 2025.
