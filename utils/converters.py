@@ -280,7 +280,7 @@ class MDList:
         for ls in lists:
             ls_block = ''.join([l[0] for l in ls])
 
-            # build the `\description{}` env
+            # build the description env
             desc = "\\begin{description}\n"
             
             for item in ls:
