@@ -28,14 +28,6 @@ class MDSimple:
         # so we turn it into a TeX comment for now
         r"!\[type:audio\]\((.+?)\)": r"%AUDIO_FILE:\1",
 
-        # images
-        r"!\[(.*?)\]\((.*?)\)(?:\{: *\.w(\d+) *\})?": r"""
-\\begin{figure}[h!]
-    \\centering
-    \\includegraphics[width=0.85\\textwidth]{\2}
-    \\caption{\1}
-\\end{figure}""",
-
         # separators
         r"^(-_*){3,}": r"\\par\\noindent\\rule{\\linewidth}{0.4pt}",  # horizontal line
         r"<br/?>": "\n\n",  # line breaks
@@ -664,4 +656,49 @@ class MDFrontmatter:
         flags = re.MULTILINE | re.DOTALL
         string = re.sub(r"^---.*---", "", string, flags=flags)
 
+        return string
+
+
+class MDMedia:
+    """
+    Convert embedded media (currently only images)
+    """
+    
+    @staticmethod
+    def image(string: str):
+        r"""
+        Convert from markdown embedded image to LaTeX figure environment
+        Markdown syntax:
+        - ![My alt text](/image/path.jpg)
+        - ![My alt text](/image/path.jpg){ width=50% }
+
+        Please note that the only sizing attribute currently supported is
+        width, specified in percentage.
+        This will be converted to a percentage of \textwidth in Latex.
+
+        :param string: the string rpr of the markdown file to convert
+        :return: string with the conversion performed
+        """
+        default_width = "85" # percent
+
+        # this regex looks a little weird, but we need to match the escape chars etc. introduced earlier...
+        images = re.finditer(r"!\[(.*?)\]\((.*?)\)(?:\\\{.*?width=``(\d+)\\%\".*?\\\})", string, re.M)
+        for match in images:
+            image_inf = {
+                'CAPTION': match[1],
+                'PATH': match[2],
+                'WIDTH': match[3] if match[3] else default_width
+            }
+            env = r"""
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=.WIDTH\textwidth]{PATH}
+    \caption{CAPTION}
+\end{figure}"""
+
+            for k, v in image_inf.items():
+                env = env.replace(k, v)
+            
+            string = string.replace(match[0], env)
+        
         return string

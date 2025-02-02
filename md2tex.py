@@ -3,7 +3,7 @@ import click
 import re
 import os
 
-from utils.converters import MDSimple, MDQuote, MDList, MDCode, MDCleaner, MDReference, MDHeader, MDFrontmatter
+from utils.converters import MDSimple, MDQuote, MDList, MDCode, MDCleaner, MDReference, MDHeader, MDFrontmatter, MDMedia
 from utils.errors_warnings import InputException, Warnings
 from utils.minted import languages
 
@@ -170,6 +170,7 @@ def convert(data, french_quote=False, unnumbered=False, document_class="article"
     data = MDReference.citation(data)
     data = MDList.definition_l(data)
     data = MDHeader.convert(data, unnumbered, document_class)
+    data = MDMedia.image(data)
 
     # "simple" replacements. simple_sub contains regexes as keys
     # and values, facilitating the regex replacement
