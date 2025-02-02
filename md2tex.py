@@ -53,7 +53,7 @@ def md2tex(
         minted_language="text",
         override_language=False
 ):
-    """
+    r"""
     convert a Markdown file to a TeX file.
 
     \b
@@ -132,7 +132,7 @@ def md2tex(
     return
     
 def convert(data, french_quote=False, unnumbered=False, document_class="article", minted_language="text", override_language=False):
-    """
+    r"""
     convert Markdown-formatted text to TeX code.
 
     \b
