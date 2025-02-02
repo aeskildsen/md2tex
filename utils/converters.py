@@ -253,34 +253,46 @@ class MDList:
     def definition_l(string: str):
         """
         translate a markdown definition list (https://python-markdown.github.io/extensions/definition_lists/)
-        into a latex `description` environment. Might be a little buggy, but works for now.
+        into a latex `description` environment.
+
         :param string:  the string representation of the markdown file
         :return: the updated string representation of a markdown file
         """
 
-        # find all definition lists (searching here for two empy newlines to delimit
-        # definitions instead of one because of extra newlines introduced by md2tex)
-        lists = re.finditer(r"((^.+?)\n(?: *\n){2}: {3}(.+?\n(?: {4}.+?\n)*(?: *\n){2}))+", string, flags=re.MULTILINE)
+        # find all definition list items
+        all_items = list(re.finditer(r"(^[^\n]+?)\n{1,3}: {3}(.+?^)(?=\S)", string, re.DOTALL | re.M))
+
+        # group items located in immediate succession of one another into lists
+        lists = []
+        current_list = []
+        for i, item in enumerate(all_items):
+            if i == 0:
+                current_list.append(item)
+            elif all_items[i - 1].end() == item.start():
+                current_list.append(item)
+            else:
+                lists.append(current_list)
+                current_list = [item]
+
+        if current_list:
+            lists.append(current_list)
         
         for ls in lists:
-            # prepare to build a list
-            lstext = ls[0]  # extract list text
-            string = string.replace(lstext, "@@LISTTOKEN@@")  # add token to source
-            
+            ls_block = ''.join([l[0] for l in ls])
+
             # build the `\description{}` env
             desc = "\\begin{description}\n"
             
-            items = re.finditer(r"(^.+?)\n(?: *\n){2}: {3}(.+?\n(?: {4}.+?\n)*)(?: *\n){2}", lstext, flags=re.MULTILINE)
-            for item in items:
+            for item in ls:
                 term = item.group(1)
                 definition = item.group(2)
                 definition = re.sub(r"^[:| ]{4}", "", definition, flags=re.M)
                 definition = definition.strip()
-                desc = desc + "  \\item[" + term + "] " + definition + "\n"
+                desc = desc + "\\item[" + term + "] " + definition + "\n\n"
             
             desc = desc + "\\end{description}\n\n"
 
-            string = string.replace("@@LISTTOKEN@@", desc)
+            string = string.replace(ls_block, desc)
 
         return string
 
