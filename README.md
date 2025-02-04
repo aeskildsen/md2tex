@@ -9,7 +9,7 @@
 - Creation of a complete and valid TeX document, either from a generic template or using your own 
   template
 - Reading Markdown from custom locations and writing a TeX file to a custom location
-- Several options for extra customization: type of quotes inline quotes, numbered or unnumbered headers, document classes...
+- Several options for extra customization: numbered or unnumbered headers, document classes, etc. ...
 - Core functionality (converting Markdown to Tex) can be used in other Python scripts as a module
 ---
 
@@ -18,12 +18,16 @@
 The advantage of having a script focused on Markdown to TeX conversion is that you can get a lot of fine tuning and extra customization.
 
 ### Requirements
+
 The script relies on the [`minted`](http://tug.ctan.org/macros/latex/contrib/minted/minted.pdf)[^1] package,
 so this needs to be installed on your machine. This script has been tested on a Linux machine and should
 work on UNIX and affiliated systems. Theoritically, it should also run on Windows, although that has not
 been tested. You will need to tailor the below scripts if you use Windows.
 
 [^1]: Website visited on 02.08.2022.
+
+The script produces LaTeX output which requires the use of a number of LaTeX packages, including:
+- csquotes
 
 ### Automated installation (MacOS/GNU-Linux)
 An installation shell script has been written to make things easier.
@@ -90,9 +94,6 @@ parameters are optional.
 - **`-u`, `--unnumbered-headers`**: if this argument is provided, the TeX headers (`\chapter`, `section`...)
   will be unnumbered.
 	- by default, the headers are numbered.
-- **`-f`, `--french-quote`**: if this argument is provided, anglo-saxon inline quotes will be replaced by
-  french quotes using the `\enquote` command.
-	- defaults to False: anglo-saxon quotes are used.
 
 ### Command line help
 ```bash
@@ -114,9 +115,9 @@ Output TeX files and the PDFs (using `XeLaTeX`) can be seen in the `readme/` and
 - it uses the custom template (`-t`) `./readme/readme_article_template.tex`
 - the output is written (`-o`) to `./readme/README.tex`
 - the document created is an article (`-d article`)
-- the document uses unnumbered headers (`-u`) and french quotes (`-f`)
+- the document uses unnumbered headers (`-u`)
 ```bash
-md2tex README.md -c -t ./readme/readme_article_template.tex -o ./readme/README.tex -d article -u -f
+md2tex README.md -c -t ./readme/readme_article_template.tex -o ./readme/README.tex -d article -u
 ```
 
 **Example 2** - a partial TeX file to a custom output (`-o ./examples/README_partial_base.tex`) with default params
@@ -124,9 +125,9 @@ md2tex README.md -c -t ./readme/readme_article_template.tex -o ./readme/README.t
 md2tex README.md -o ./examples/README_partial_base.tex
 ```
 
-**Example 3** - a complete document of class `book` using a custom template with unnumbered headers and french quotes
+**Example 3** - a complete document of class `book` using a custom template with unnumbered headers
 ```bash
-md2tex README.md -c -t ./readme/readme_book_template.tex -o ./examples/README_book.tex -d book -u -f
+md2tex README.md -c -t ./readme/readme_book_template.tex -o ./examples/README_book.tex -d book -u
 ```
 
 **Example 4** - a complete document of class `article` with a custom template and numbered (default) headers
@@ -155,7 +156,7 @@ tex = convert(markdown)
 print(tex)  # Prints: \section{A title}
 ```
 
-The `convert` function takes three optional, additional arguments corresponding to the command line arguments --french-quote, --unnumbered-headers, and --document-class.
+The `convert` function takes two optional, additional arguments corresponding to the command line arguments --unnumbered-headers, and --document-class.
 
 ## Markdown syntax
 
@@ -182,7 +183,7 @@ The `convert` function takes three optional, additional arguments corresponding 
 - Titles and different title levels
 - Images
 - URLs, both in text and as Markdown hyperlinks.
-- Inline quotes : french and english style, nested quotes.
+- Inline quotes
 - Footnotes. **Warning**: loose footnotes (references in the body that point to nothing
   or footnotes that point to nothing in the body) will be deleted.
 - Citations in pandoc-markdown style. **Warning**: Only rudimentary support.

@@ -23,10 +23,6 @@ from utils.minted import languages
                    + "`@@BODYTOKEN@@` between its `\\begin{document}` and `\\end{document}` "
                    + "to perform the replacement. "
                    + "defaults to `utils/template.tex`")
-@click.option("-f", "--french-quote", "french_quote", is_flag=True, default=False,
-              help="optional. if provided, the Markdown inline quotes will be converted"
-                   " as french quotes `\\enquote{}` instead of anglo-saxon quotes."
-                   + "defaults to `False`: quotes are translated as anglo-saxon quotes.")
 @click.option("-u", "--unumbered-headers", "unnumbered", is_flag=True, default=False,
               help="optional. if provided, Markdown headers will be translated as TeX unnumbered headers/sections"
                    + "defaults to False: the headers are numbered by default.")
@@ -46,7 +42,6 @@ def md2tex(
         outpath=None,
         tex=False,
         template="utils/template.tex",
-        french_quote=False,
         unnumbered=False,
         document_class="article",
         write_stdout=False,
@@ -68,8 +63,6 @@ def md2tex(
                      \begin{document} - \end{document} should be empty, except for a
                      title page; this part must contain a "@@BODYTOKEN@@" string to be
                      able to append the TeX body to the template.
-    :param french_quote: whether to translate "" and '' as english tex quotes (``")
-                          or french quotes (\enquote{})
     :param unnumbered: wether to convert headers as numbered chapters/sections (`\chapter{}`)
                      or as unnumbered ones (`\chapter*{}`). defaults to False:
                      the headers are numbered by default.
@@ -105,7 +98,7 @@ def md2tex(
     # open file and read contents
     with open(inpath, mode="r") as fh:
         data = fh.read()
-        data = convert(data, french_quote, unnumbered, document_class, minted_language, override_language)
+        data = convert(data, unnumbered, document_class, minted_language, override_language)
 
     # ==================== BUILD + WRITE OUTPUT TO FILE ==================== #
     if write_stdout:
@@ -131,7 +124,7 @@ def md2tex(
     
     return
     
-def convert(data, french_quote=False, unnumbered=False, document_class="article", minted_language="text", override_language=False):
+def convert(data, unnumbered=False, document_class="article", minted_language="text", override_language=False):
     r"""
     convert Markdown-formatted text to TeX code.
 
@@ -139,8 +132,6 @@ def convert(data, french_quote=False, unnumbered=False, document_class="article"
     parameters (see options if you are in `--help` mode):
     -----------------------------------------------------
     :param data: the string containing the markdown-formatted text
-    :param french_quote: whether to translate "" and '' as english tex quotes (``")
-                          or french quotes (\enquote{})
     :param unnumbered: whether to convert headers as numbered chapters/sections (`\chapter{}`)
                      or as unnumbered ones (`\chapter*{}`). defaults to False:
                      the headers are numbered by default.
@@ -161,7 +152,8 @@ def convert(data, french_quote=False, unnumbered=False, document_class="article"
     #                                                          by `prepare_markdown()`
     data, codedict = MDCleaner.prepare_markdown(data)  # escape special chars + remove code envs from the pipeline
     data = MDFrontmatter.convert(data)
-    data = MDQuote.inline_quote(data, french_quote)
+    data = MDMedia.image(data)
+    data = MDQuote.inline_quote(data)
     data = MDQuote.block_quote(data)
     data = MDList.unordered_l(data)
     data = MDList.ordered_l(data)
@@ -170,7 +162,6 @@ def convert(data, french_quote=False, unnumbered=False, document_class="article"
     data = MDReference.citation(data)
     data = MDList.definition_l(data)
     data = MDHeader.convert(data, unnumbered, document_class)
-    data = MDMedia.image(data)
 
     # "simple" replacements. simple_sub contains regexes as keys
     # and values, facilitating the regex replacement

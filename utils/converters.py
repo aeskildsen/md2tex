@@ -133,20 +133,19 @@ class MDQuote:
         return string
 
     @staticmethod
-    def inline_quote(string: str, french_quote: bool):
+    def inline_quote(string: str):
         r"""
-        convert the markdown quotes to LaTeX.
+        convert quotation marks like "sandwich" to LaTeX \enquote{sandwich}
         :param string: the string representation of the markdown file
-        :param french_quote: translate the quotes as french quotes (\enquote{})
-                              or anglo-saxon quotes (``'')
         :return: the updated string representation of a markdown file
         """
-        if french_quote is True:
-            string = re.sub(r"\"(.*)\"", r"\\enquote{\1}", string)
-            string = re.sub(r"'(.*)'", r'``\1"', string)
-        else:
-            string = re.sub(r"\"(.*)\"", r'``\1"', string)
-            string = re.sub(r"'(.*)'", r"`\1'", string)
+        quotes = re.finditer(r"\"(.*?)\"", string, re.M)
+        for q in quotes:
+            quote = q[1]
+            quote = re.sub(r"(?<=\W)'\b(.*?)'(?=\W)", r"\\enquote{\1}", quote)
+            quote = "\\enquote{" + quote + "}"
+            string = string.replace(q[0], quote)
+
         return string
 
 
@@ -693,8 +692,8 @@ class MDMedia:
         """
         default_width = "85" # percent
 
-        # this regex looks a little weird, but we need to match the escape chars etc. introduced earlier...
-        images = re.finditer(r"!\[(.*?)\]\((.*?)\)(?:\\\{.*?width=``(\d+)\\%\".*?\\\})", string, re.M)
+        # this regex looks a little weird, but we need to match the escaped chars introduced earlier...
+        images = re.finditer(r"!\[(.*?)\]\((.*?)\)(?:\\\{.*?width=\"(\d+)\\%\".*?\\\})", string, re.M)
         for match in images:
             image_inf = {
                 'CAPTION': match[1],
