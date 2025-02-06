@@ -693,7 +693,7 @@ class MDMedia:
         default_width = "85" # percent
 
         # this regex looks a little weird, but we need to match the escaped chars introduced earlier...
-        images = re.finditer(r"!\[(.*?)\]\((.*?)\)(?:\\\{.*?width=\"(\d+)\\%\".*?\\\})", string, re.M)
+        images = re.finditer(r"!\[(.*?)\]\((.*?)\)(?:\\\{.*?width=\"(\d+)\\%\".*?\\\})?", string, re.M)
         for match in images:
             image_inf = {
                 'CAPTION': match[1],
