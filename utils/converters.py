@@ -127,7 +127,7 @@ class MDQuote:
         """
         string = re.sub(
             r"^((>.+(\n|$))+)",
-            r"\\begin{quotation} \n \1 \n \\end{quotation}",
+            r"\\begin{quotation}\n\1\n\\end{quotation}\n\n",
             string, flags=re.M
         ).replace(">", " ")
         return string
@@ -612,7 +612,7 @@ class MDCleaner:
         string = string.replace(r"}", r"\}")
         # string = re.sub("(?<![^\]]\[)\^", r"\^", string, flags=re.M)
         string = re.sub(r"\\(?![\{\}])", r"\\textbackslash{}", string, flags=re.M)
-        string = string.replace(r">", r"\textgreater{}")
+        # string = string.replace(r">", r"\textgreater{}") # obstructs blockquotes
         string = string.replace(r"#", r"\#")
         string = string.replace("$", r"\$")
         string = string.replace("%", r"\%")
