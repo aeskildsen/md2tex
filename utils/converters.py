@@ -501,7 +501,7 @@ class MDReference:
         - [@doe1999, p. 30] -> \parencite[p. 30]{doe1999}
         - [@doe1999, 30-35] -> \parencite[pp. 30-35]{doe1999}
         - [@doe1999, pp. 30-35] -> \parencite[pp. 30-35]{doe1999}
-        - [@doe1999; @smith] -> \parencite{doe1999, smith}
+        - [@doe1999; @smith] -> \parencites{doe1999, smith}
         
         Limitations:
         - Prefix or suffix not supported currently
@@ -518,7 +518,7 @@ class MDReference:
             if ';' in ref_string[1]:
                 # multiple references in one citation
                 # -> simple mode
-                tex_citation = r"\parencite{" + ref_string[1].replace(';', ',') + "}"
+                tex_citation = r"\parencites{" + ref_string[1].replace(';', ',') + "}"
                 tex_citation = tex_citation.replace('@', '')
             else:
                 # only one citation, so we split into citation key and locator
@@ -532,9 +532,9 @@ class MDReference:
                 else:
                     tex_locator = ''
                 if citation_key.startswith('-'):
-                    tex_citation = r" \parencite*" + tex_locator + "{" + citation_key[2:] + "}"
+                    tex_citation = r"\parencite*" + tex_locator + "{" + citation_key[2:] + "}"
                 else:
-                    tex_citation = r" \parencite" + tex_locator + "{" + citation_key[1:] + "}"
+                    tex_citation = r"\parencite" + tex_locator + "{" + citation_key[1:] + "}"
         
             string = string.replace(ref_string[0], tex_citation)
 
