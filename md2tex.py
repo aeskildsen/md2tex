@@ -3,7 +3,7 @@ import click
 import re
 import os
 
-from utils.converters import MDSimple, MDQuote, MDList, MDCode, MDCleaner, MDReference, MDHeader, MDFrontmatter, MDMedia
+from utils.converters import MDSimple, MDQuote, MDList, MDCode, MDCleaner, MDReference, MDHeader, MDFrontmatter, MDMedia, MDMath
 from utils.errors_warnings import InputException, Warnings
 from utils.minted import languages
 
@@ -150,6 +150,7 @@ def convert(data, unnumbered=False, document_class="article", minted_language="t
     data = MDCode.inline_code(data, lang)                   #  must be interpreted verbatim. therefore,
     #                                                          these functions come first so that they won't be changed
     #                                                          by `prepare_markdown()`
+    data, mathdict = MDMath.stash_math(data)
     data, codedict = MDCleaner.prepare_markdown(data)  # escape special chars + remove code envs from the pipeline
     data = MDFrontmatter.convert(data)
     data = MDMedia.image(data)
@@ -167,5 +168,5 @@ def convert(data, unnumbered=False, document_class="article", minted_language="t
     # and values, facilitating the regex replacement
     data = MDSimple.convert(data)
     data = MDCleaner.clean_tex(data, codedict)  # clean the tex file + reinject the escaped code blocks
-
+    data = MDMath.restore_math(data, mathdict)
     return(data)

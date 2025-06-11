@@ -713,3 +713,57 @@ class MDMedia:
             string = string.replace(match[0], env)
         
         return string
+
+
+class MDMath:
+    """
+    Handles conversion of markdown-embedded LaTeX math expressions.
+    Converts markdown math delimiters to proper LaTeX math environments.
+    """
+
+    @staticmethod
+    def stash_math(string: str):
+        """
+        Finds all math expressions, replaces them with tokens, and stores the math code.
+        Converts markdown delimiters to LaTeX delimiters.
+        Returns the modified string and a dict mapping tokens to math code.
+        """
+        mathdict = {}
+        n = 0
+
+        # Block math: $$...$$ (multiline)
+        def block_replacer(match):
+            nonlocal n
+            token = f"@@MATHTOKEN{n}@@"
+            # Convert $$...$$ to \[...\]
+            expr = match.group(1)
+            latex_math = r"\[" + expr + r"\]"
+            mathdict[token] = latex_math
+            n += 1
+            return token
+
+        string = re.sub(r"\$\$(.+?)\$\$", block_replacer, string, flags=re.DOTALL)
+
+        # Inline math: $...$ (not preceded/followed by $)
+        def inline_replacer(match):
+            nonlocal n
+            token = f"@@MATHTOKEN{n}@@"
+            expr = match.group(1)
+            latex_math = r"\(" + expr + r"\)"
+            mathdict[token] = latex_math
+            n += 1
+            return token
+
+        # Avoid matching escaped \$ and block math
+        string = re.sub(r"(?<!\$)\$(?!\$)(.+?)(?<!\$)\$(?!\$)", inline_replacer, string, flags=re.DOTALL)
+
+        return string, mathdict
+
+    @staticmethod
+    def restore_math(string: str, mathdict: dict):
+        """
+        Replaces tokens with the converted LaTeX math expressions.
+        """
+        for token, math in mathdict.items():
+            string = string.replace(token, math)
+        return string
